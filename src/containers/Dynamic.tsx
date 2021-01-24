@@ -105,7 +105,7 @@ class Dynamic extends Component<props, {}> {
       .attr('y', (d) => d.y)
       .attr('width', (d) => d.width)
       .attr('height', (d, _i) => d.height)
-      .attr('fill', 'red')
+      .attr('fill', 'blue')
       .attr('stroke', 'black');
 
     svg
@@ -118,7 +118,7 @@ class Dynamic extends Component<props, {}> {
       .attr('y', (d) => d.y)
       .attr('width', (d) => d.width)
       .attr('height', (d, _i) => d.height)
-      .attr('fill', 'red')
+      .attr('fill', 'pink')
       .attr('stroke', 'black');
   }
 
