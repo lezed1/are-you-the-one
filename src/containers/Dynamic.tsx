@@ -14,8 +14,8 @@ const cast = {
     'Paris',
     'Shelby',
     'Tyler',
-  ],
-  extra_girl: 'Christina',
+  ] as const,
+  extra_girl: 'Christina' as const,
   guys: [
     'Alex',
     'Anthony',
@@ -27,8 +27,16 @@ const cast = {
     'Layton',
     'Nate',
     'Pratt',
-  ],
+  ] as const,
 };
+
+type girl = typeof cast.girls[number];
+type guy = typeof cast.guys[number];
+
+type truth_booth = { girl: girl; guy: guy; match: boolean };
+const truth_booths: truth_booth[] = [
+  { girl: 'Jasmine', guy: 'John', match: false },
+];
 
 type rect_properties = {
   x: number;
@@ -64,28 +72,27 @@ type label_properties = {
   rotate?: number;
 };
 
-function append_label(
-  this: SVGElement,
-  { x, y, width, height, label_contents, rotate }: label_properties
-) {
-  const center_x = x + width / 2;
-  const center_y = y + height / 2;
-  const label_element = d3
-    .select(this)
+const append_label = (
+  label: d3.Selection<d3.EnterElement, label_properties, SVGGElement, unknown>
+) => {
+  const center_x = ({ x, width }: label_properties) => x + width / 2;
+  const center_y = ({ y, height }: label_properties) => y + height / 2;
+  label
     .append('text')
     .classed('label', true)
     .attr('dx', center_x)
     .attr('dy', center_y)
-    .attr('width', width)
-    .attr('height', height)
-    .text(label_contents);
-  if (!_.isUndefined(rotate)) {
-    label_element.attr(
-      'transform',
-      `rotate(${rotate}, ${center_x}, ${center_y})`
-    );
-  }
-}
+    .attr('width', ({ width }) => width)
+    .attr('height', ({ height }) => height)
+    .text(({ label_contents }) => label_contents)
+    .attr('transform', (label_properties) => {
+      if (!_.isUndefined(label_properties.rotate)) {
+        return `rotate(${label_properties.rotate}, ${center_x(
+          label_properties
+        )}, ${center_y(label_properties)})`;
+      }
+    });
+};
 
 type props = { path?: String };
 
@@ -97,7 +104,7 @@ class Dynamic extends Component<props, {}> {
   }
 
   drawChart() {
-    const overall_width = 1000;
+    const overall_width = 1200;
     const overall_height = 1000;
 
     const text_width = 200;
@@ -138,14 +145,28 @@ class Dynamic extends Component<props, {}> {
     }));
 
     const squares: rect_properties[] = _.flatMap(girls, (girl) =>
-      _.map(guys, (guy) => ({
-        x: girl.x,
-        y: guy.y,
-        width: row_width,
-        height: row_height,
-        fill: 'green',
-        stroke: 'black',
-      }))
+      _.map(guys, (guy) => {
+        const truth_booth: truth_booth | undefined = _.find(truth_booths, {
+          girl: girl.name,
+          guy: guy.name,
+        });
+        let fill;
+
+        if (_.isUndefined(truth_booth)) {
+          fill = 'green';
+        } else {
+          fill = truth_booth.match ? 'gold' : 'black';
+        }
+
+        return {
+          x: girl.x,
+          y: guy.y,
+          width: row_width,
+          height: row_height,
+          fill,
+          stroke: 'black',
+        };
+      })
     );
 
     const svg = d3
@@ -170,7 +191,7 @@ class Dynamic extends Component<props, {}> {
       .data(guy_labels)
       .enter()
       .each(append_rect)
-      .each(append_label);
+      .call(append_label);
 
     svg
       .append('g')
@@ -179,7 +200,7 @@ class Dynamic extends Component<props, {}> {
       .data(girl_labels)
       .enter()
       .each(append_rect)
-      .each(append_label);
+      .call(append_label);
   }
 
   render() {
