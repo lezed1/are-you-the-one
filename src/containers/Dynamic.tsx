@@ -30,14 +30,67 @@ const cast = {
   ],
 };
 
+type rect_properties = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fill: string;
+  stroke?: string;
+};
+
+function append_rect(
+  this: SVGElement,
+  { x, y, width, height, fill, stroke }: rect_properties
+) {
+  const rect = d3.select(this).append('rect');
+  rect
+    .attr('x', x)
+    .attr('y', y)
+    .attr('width', width)
+    .attr('height', height)
+    .attr('fill', fill);
+  if (!_.isUndefined(stroke)) {
+    rect.attr('stroke', stroke);
+  }
+}
+
+type label_properties = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label_contents: string;
+  rotate?: number;
+};
+
+function append_label(
+  this: SVGElement,
+  { x, y, width, height, label_contents, rotate }: label_properties
+) {
+  const center_x = x + width / 2;
+  const center_y = y + height / 2;
+  const label_element = d3
+    .select(this)
+    .append('text')
+    .classed('label', true)
+    .attr('dx', center_x)
+    .attr('dy', center_y)
+    .attr('width', width)
+    .attr('height', height)
+    .text(label_contents);
+  if (!_.isUndefined(rotate)) {
+    label_element.attr(
+      'transform',
+      `rotate(${rotate}, ${center_x}, ${center_y})`
+    );
+  }
+}
+
 type props = { path?: String };
 
 class Dynamic extends Component<props, {}> {
   private chartRef = React.createRef<HTMLDivElement>();
-
-  // constructor(props: props) {
-  //   super(props);
-  // }
 
   componentDidMount() {
     this.drawChart();
@@ -55,25 +108,45 @@ class Dynamic extends Component<props, {}> {
     const row_width = grid_width / cast.girls.length;
     const row_height = grid_height / cast.guys.length;
 
-    const girls = _.map(cast.girls, (girl, girl_idx) => {
-      return { name: girl, x: text_width + girl_idx * row_width };
-    });
-    const guys = _.map(cast.guys, (guy, guy_idx) => {
-      return { name: guy, y: text_width + guy_idx * row_height };
-    });
+    const girls = _.map(cast.girls, (girl, girl_idx) => ({
+      name: girl,
+      x: text_width + girl_idx * row_width,
+    }));
+    const guys = _.map(cast.guys, (guy, guy_idx) => ({
+      name: guy,
+      y: text_width + guy_idx * row_height,
+    }));
 
-    const guy_labels = _.map(guys, (guy) => {
-      return { x: 0, y: guy.y, width: text_width, height: row_height };
-    });
-    const girl_labels = _.map(girls, (girl) => {
-      return { x: girl.x, y: 0, width: row_width, height: text_width };
-    });
+    const guy_labels = _.map(guys, (guy) => ({
+      x: 0,
+      y: guy.y,
+      width: text_width,
+      height: row_height,
+      fill: 'blue',
+      stroke: 'black',
+      label_contents: guy.name,
+    }));
+    const girl_labels = _.map(girls, (girl) => ({
+      x: girl.x,
+      y: 0,
+      width: row_width,
+      height: text_width,
+      fill: 'pink',
+      stroke: 'black',
+      label_contents: girl.name,
+      rotate: -90,
+    }));
 
-    const squares = _.flatMap(girls, (girl, girl_idx) => {
-      return _.map(guys, (guy, guy_idx) => {
-        return { x: girl.x, y: guy.y, width: row_width, height: row_height };
-      });
-    });
+    const squares: rect_properties[] = _.flatMap(girls, (girl) =>
+      _.map(guys, (guy) => ({
+        x: girl.x,
+        y: guy.y,
+        width: row_width,
+        height: row_height,
+        fill: 'green',
+        stroke: 'black',
+      }))
+    );
 
     const svg = d3
       .select(this.chartRef.current)
@@ -84,42 +157,29 @@ class Dynamic extends Component<props, {}> {
 
     svg
       .append('g')
+      .attr('id', 'grid')
       .selectAll('rect')
       .data(squares)
       .enter()
-      .append('rect')
-      .attr('x', (d) => d.x)
-      .attr('y', (d) => d.y)
-      .attr('width', (d) => d.width)
-      .attr('height', (d, _i) => d.height)
-      .attr('fill', 'green')
-      .attr('stroke', 'black');
+      .each(append_rect);
 
     svg
       .append('g')
+      .attr('id', 'guy-labels')
       .selectAll('rect')
       .data(guy_labels)
       .enter()
-      .append('rect')
-      .attr('x', (d) => d.x)
-      .attr('y', (d) => d.y)
-      .attr('width', (d) => d.width)
-      .attr('height', (d, _i) => d.height)
-      .attr('fill', 'blue')
-      .attr('stroke', 'black');
+      .each(append_rect)
+      .each(append_label);
 
     svg
       .append('g')
+      .attr('id', 'girl-labels')
       .selectAll('rect')
       .data(girl_labels)
       .enter()
-      .append('rect')
-      .attr('x', (d) => d.x)
-      .attr('y', (d) => d.y)
-      .attr('width', (d) => d.width)
-      .attr('height', (d, _i) => d.height)
-      .attr('fill', 'pink')
-      .attr('stroke', 'black');
+      .each(append_rect)
+      .each(append_label);
   }
 
   render() {

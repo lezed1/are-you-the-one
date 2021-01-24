@@ -31,3 +31,9 @@ nav a {
 .content {
   padding: 1rem;
 }
+
+text.label {
+  text-anchor: middle;
+  alignment-baseline: central;
+  font-size: 35px;
+}
