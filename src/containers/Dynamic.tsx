@@ -5,7 +5,7 @@ import * as _ from 'lodash';
 const cast = {
   girls: [
     'Alexandria',
-    'Ashlet',
+    'Ashley',
     'Briana',
     'Ellie',
     'Jasmine',
@@ -33,10 +33,40 @@ const cast = {
 type girl = typeof cast.girls[number];
 type guy = typeof cast.guys[number];
 
-type truth_booth = { girl: girl; guy: guy; match: boolean };
+type matchup = { girl: girl; guy: guy };
+
+type truth_booth = { matchup: matchup; match: boolean };
 const truth_booths: truth_booth[] = [
-  { girl: 'Jasmine', guy: 'John', match: false },
+  { matchup: { girl: 'Jessia', guy: 'Brandon' }, match: false },
 ];
+
+let matchups: { [key: string]: matchup[] } = {
+  night_one: [
+    { girl: 'Ellie', guy: 'Alex' },
+    { girl: 'Jessia', guy: 'Anthony' },
+    // { girl: 'Christina', guy: 'Brandon' },
+    { girl: 'Briana', guy: 'Curtis' },
+    { girl: 'Ashley', guy: 'Dario' },
+    { girl: 'Alexandria', guy: 'Garland' },
+    { girl: 'Jasmine', guy: 'John' },
+    { girl: 'Jenni', guy: 'Layton' },
+    { girl: 'Shelby', guy: 'Nate' },
+    { girl: 'Paris', guy: 'Pratt' },
+  ],
+  night_two: [
+    { girl: 'Jessia', guy: 'Layton' },
+    { girl: 'Shelby', guy: 'Dario' },
+    { girl: 'Paris', guy: 'Pratt' },
+    { girl: 'Jasmine', guy: 'Garland' },
+    { girl: 'Ashley', guy: 'John' },
+    { girl: 'Tyler', guy: 'Brandon' },
+    { girl: 'Ellie', guy: 'Alex' },
+    // { girl: 'Christina', guy: 'Alex' },
+    { girl: 'Alexandria', guy: 'Anthony' },
+    { girl: 'Jenni', guy: 'Nate' },
+    { girl: 'Briana', guy: 'Curtis' },
+  ],
+};
 
 type rect_properties = {
   x: number;
@@ -147,14 +177,11 @@ class Dynamic extends Component<props, {}> {
     const squares: rect_properties[] = _.flatMap(girls, (girl) =>
       _.map(guys, (guy) => {
         const truth_booth: truth_booth | undefined = _.find(truth_booths, {
-          girl: girl.name,
-          guy: guy.name,
+          matchup: { girl: girl.name, guy: guy.name },
         });
-        let fill;
+        let fill = 'green';
 
-        if (_.isUndefined(truth_booth)) {
-          fill = 'green';
-        } else {
+        if (!_.isUndefined(truth_booth)) {
           fill = truth_booth.match ? 'gold' : 'black';
         }
 
